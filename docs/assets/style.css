@@ -182,8 +182,9 @@ a:hover{color:var(--accent)}
 .hero-inner > *:nth-child(3){animation-delay:.22s}
 .hero-inner > *:nth-child(4){animation-delay:.28s}
 .hero-inner > *:nth-child(5){animation-delay:.34s}
-.hero-inner > *:nth-child(6){animation-delay:.42s}
-.hero-inner > *:nth-child(7){animation-delay:.50s}
+.hero-inner > *:nth-child(6){animation-delay:.40s}
+.hero-inner > *:nth-child(7){animation-delay:.46s}
+.hero-inner > *:nth-child(8){animation-delay:.54s}
 .venue-pill{
   display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.78rem;letter-spacing:.04em;
   color:var(--text-dim);border:1px solid var(--line-solid);border-radius:999px;padding:6px 14px;margin-bottom:26px;
@@ -359,17 +360,45 @@ footer .wrap{text-align:center}
 footer p{margin-bottom:10px;color:var(--text-dim);font-size:.95rem}
 footer a{color:var(--text-dim)}
 footer a:hover{color:var(--accent)}
-/* partner / affiliation logos */
+/* partner / affiliation logos (top of hero, floating in colour) */
 .partners{
-  display:flex;flex-wrap:wrap;gap:40px;justify-content:center;align-items:center;
-  margin:0 auto 28px;padding-bottom:26px;border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:46px;justify-content:center;align-items:center;
+  margin:6px 0 30px;
 }
-.partners a{display:inline-flex;align-items:center;line-height:0;opacity:.7;transition:opacity .2s var(--ease), filter .2s var(--ease)}
-.partners img{height:42px;width:auto;display:block;filter:grayscale(1) brightness(1.15) contrast(.85)}
-:root[data-theme="light"] .partners img{filter:grayscale(1) brightness(.9) contrast(1)}
-.partners a:hover{opacity:1}
-.partners a:hover img{filter:none}
-@media(max-width:560px){ .partners{gap:24px} .partners img{height:34px} }
+.partners a{
+  display:inline-flex;align-items:center;justify-content:center;line-height:0;
+  transition:filter .25s var(--ease);
+  animation:logoFloat 6s ease-in-out infinite;
+  will-change:transform;
+}
+.partners img{
+  height:42px;width:auto;display:block;
+  transition:filter .25s var(--ease);
+  pointer-events:none;          /* let the <a> own the hover/cursor (esp. for the SVG-wrapped-PNG CAFEIN asset) */
+}
+.partners a{cursor:pointer}     /* belt-and-suspenders: force pointer regardless of inner asset */
+/* desync each logo's bob so the row breathes organically, not in lockstep */
+.partners a:nth-child(1){animation-duration:5.6s; animation-delay:-0.0s}
+.partners a:nth-child(2){animation-duration:6.3s; animation-delay:-1.4s}
+.partners a:nth-child(3){animation-duration:5.2s; animation-delay:-2.7s}
+
+/* theme-aware variant swap: show colour on light, white on dark */
+.partners .logo-white{display:none}
+:root[data-theme="dark"] .partners .logo-color{display:none}
+:root[data-theme="dark"] .partners .logo-white{display:block}
+/* a faint drop-shadow under each logo for visual weight */
+.partners img{filter:drop-shadow(0 2px 6px rgba(0,0,0,.18))}
+.partners a:hover img{filter:drop-shadow(0 6px 14px rgba(0,0,0,.22))}
+:root[data-theme="dark"] .partners img{filter:drop-shadow(0 2px 8px rgba(0,0,0,.45))}
+:root[data-theme="dark"] .partners a:hover img{filter:drop-shadow(0 6px 16px rgba(0,0,0,.55))}
+
+@keyframes logoFloat{
+  0%,100% { transform:translateY(0)      rotate(0deg); }
+  25%     { transform:translateY(-5px)   rotate(.4deg); }
+  50%     { transform:translateY(-7px)   rotate(0deg); }
+  75%     { transform:translateY(-3px)   rotate(-.4deg); }
+}
+@media(max-width:560px){ .partners{gap:28px} .partners img{height:34px} }
 
 /* ---------- reveal-on-scroll ---------- */
 .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease), transform .7s var(--ease)}
