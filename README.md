@@ -1,209 +1,116 @@
 # DP-KFC: Data-Free Preconditioning for Privacy-Preserving Deep Learning
 
-> Anonymous code submission for ICML 2026
+<div align="center">
 
-Differentially private SGD injects isotropic noise into gradients, ignoring the highly anisotropic curvature of deep networks. Second-order preconditioners like KFAC can correct this geometry, but estimating curvature typically requires either private data (spending privacy budget) or public data (risking domain mismatch).
+[**🌐 Project page**](https://molinamarcvdb.github.io/DP-KFC/) &nbsp;·&nbsp;
+[**📄 Paper**](https://molinamarcvdb.github.io/DP-KFC/static/dp_kfc.pdf) &nbsp;·&nbsp;
+[📚 arXiv](#) &nbsp;·&nbsp;
+[❝ BibTeX](#citation)
 
-**DP-KFC** sidesteps both problems. We show that the Fisher Information Matrix decomposes into *architectural sensitivity* (recoverable via synthetic noise) and *input correlations* (approximable from modality-specific frequency statistics). This lets us build effective KFAC preconditioners **without any real data**, closing the gap to public-data oracles and strictly dominating baselines under domain shift.
+*Accepted at the International Conference on Machine Learning (ICML), 2026.*
 
-## Main Results
+</div>
 
-### Test Accuracy (%) — All Datasets (Table 4)
+---
 
-Underlined values are best within 1 std. Syn. = Synthetic noise preconditioner, Pub. = Public data preconditioner.
+Differentially private SGD injects **isotropic** noise into networks whose loss landscape is wildly **anisotropic**. Second-order preconditioners like KFAC can fix this geometric mismatch, but estimating curvature has traditionally cost either privacy budget (estimating from the private data) or a public proxy (which may not exist for your domain).
 
-**MNIST / CNN**
+**DP-KFC** sidesteps both. We show the KFAC Fisher block decomposes into *architectural sensitivity* (recoverable from synthetic noise) and *input correlations* (approximable from modality-specific frequency statistics), so the preconditioner can be built **with no real data and no privacy cost**. Empirically it matches public-data preconditioning on vision, improves over DP-SGD and adaptive baselines across modalities, and strictly dominates public proxies under domain shift.
 
-| epsilon | Non-DP | DP-SGD | Syn. KFAC | Pub. KFAC |
-|:---:|:---:|:---:|:---:|:---:|
-| 0.5 | 98.8 +/- 0.1 | 90.8 +/- 0.2 | 93.3 +/- 0.6 | **94.7 +/- 0.4** |
-| 1 | | 91.7 +/- 0.2 | 94.2 +/- 0.5 | **95.3 +/- 0.4** |
-| 2 | | 92.5 +/- 0.3 | 95.0 +/- 0.4 | **95.7 +/- 0.3** |
-| 3 | | 92.9 +/- 0.3 | 95.3 +/- 0.4 | **96.0 +/- 0.3** |
-| 5 | | 93.4 +/- 0.3 | 95.7 +/- 0.3 | **96.2 +/- 0.3** |
-| 8 | | 93.7 +/- 0.3 | 95.9 +/- 0.3 | **96.4 +/- 0.3** |
-| 10 | | 94.0 +/- 0.3 | 96.0 +/- 0.3 | **96.5 +/- 0.2** |
+> 👉 **The [project page](https://molinamarcvdb.github.io/DP-KFC/) has the walk-through, all figures, and the headline numbers.** This README focuses on running the code.
 
-**CIFAR-100 / CrossViT**
-
-| epsilon | Non-DP | DP-SGD | Syn. KFAC | Pub. KFAC |
-|:---:|:---:|:---:|:---:|:---:|
-| 0.5 | 68.3 +/- 0.3 | 52.1 +/- 0.5 | **53.6 +/- 0.5** | 53.1 +/- 0.5 |
-| 1 | | 56.2 +/- 0.4 | **57.6 +/- 0.5** | 57.3 +/- 0.4 |
-| 2 | | 58.5 +/- 0.3 | **59.8 +/- 0.4** | 59.6 +/- 0.5 |
-| 3 | | 59.5 +/- 0.3 | **60.9 +/- 0.3** | 60.6 +/- 0.4 |
-| 5 | | 60.7 +/- 0.3 | **62.0 +/- 0.3** | 61.6 +/- 0.4 |
-| 8 | | 61.4 +/- 0.4 | **62.7 +/- 0.4** | 62.4 +/- 0.3 |
-| 10 | | 62.0 +/- 0.4 | **63.2 +/- 0.3** | 62.9 +/- 0.3 |
-
-**StackOverflow / BERT**
-
-| epsilon | Non-DP | DP-SGD | Syn. KFAC | Pub. KFAC |
-|:---:|:---:|:---:|:---:|:---:|
-| 0.5 | 99.0 +/- 0.5 | 78.9 +/- 7.3 | 81.3 +/- 7.0 | **89.8 +/- 4.2** |
-| 1 | | 89.5 +/- 1.8 | 91.8 +/- 1.9 | **96.1 +/- 1.0** |
-| 2 | | 92.9 +/- 0.7 | 95.4 +/- 0.3 | **97.5 +/- 0.3** |
-| 3 | | 93.6 +/- 0.7 | 95.9 +/- 0.3 | **97.9 +/- 0.3** |
-| 5 | | 94.2 +/- 0.7 | 96.4 +/- 0.2 | **98.1 +/- 0.3** |
-| 8 | | 94.6 +/- 0.6 | 96.5 +/- 0.1 | **98.2 +/- 0.2** |
-| 10 | | 94.8 +/- 0.6 | 96.6 +/- 0.1 | **98.3 +/- 0.2** |
-
-**IMDB / Logistic Regression**
-
-| epsilon | Non-DP | DP-SGD | Syn. KFAC | Pub. KFAC |
-|:---:|:---:|:---:|:---:|:---:|
-| 0.5 | 88.0 +/- 0.5 | 82.1 +/- 0.3 | **83.5 +/- 0.1** | **83.5 +/- 0.1** |
-| 1 | | 82.9 +/- 0.1 | **85.1 +/- 0.0** | **85.1 +/- 0.1** |
-| 1.5 | | 83.1 +/- 0.0 | **85.5 +/- 0.1** | **85.5 +/- 0.1** |
-| 2.8 | | 83.1 +/- 0.1 | **85.9 +/- 0.1** | 85.8 +/- 0.1 |
-| 8 | | 83.2 +/- 0.1 | **86.0 +/- 0.0** | **86.0 +/- 0.0** |
-
-### Transfer Robustness (Table 1)
-
-Test accuracy (%) under domain mismatch at epsilon = 1.0. Oracle uses private data.
-
-| Method | Ideal Alignment (Fashion <- MNIST) | Texture Disjoint (Path <- MNIST) |
-|:---|:---:|:---:|
-| Oracle (Private) | 88.3 +/- 0.2 | 78.4 +/- 1.7 |
-| DP-SGD | 83.5 +/- 0.7 | 68.5 +/- 2.3 |
-| AdaDPS (Public) | 84.7 +/- 0.3 | 70.5 +/- 2.0 |
-| AdaDPS (Pink) | 84.2 +/- 0.5 | 71.2 +/- 1.9 |
-| Public DP-KFC | 87.6 +/- 0.2 | 73.4 +/- 1.3 |
-| **Synthetic DP-KFC** | **87.8 +/- 0.2** | **78.2 +/- 1.9** |
-
-Synthetic DP-KFC matches the private-data oracle even under severe domain mismatch, where public-data methods degrade.
-
-### Bayesian Hyperparameter Optimization (Table 5)
-
-epsilon = 2.0, 150 Optuna trials per method.
-
-| Dataset | DP-SGD | **DP-KFC** | Delta | Optimal alpha |
-|:---|:---:|:---:|:---:|:---:|
-| MNIST | 94.2% | **97.1%** | +2.9% | 1.80 |
-| FashionMNIST | 84.3% | **87.1%** | +2.8% | 1.48 |
-| CIFAR-10 | 50.5% | **59.1%** | +8.6% | 1.78 |
-
-## Installation
+## Install
 
 ```bash
-# Clone and install
-git clone https://github.com/<anonymous>/DP-KFC.git
+git clone https://github.com/molinamarcvdb/DP-KFC.git
 cd DP-KFC
 
-# Core install
-uv sync
-
-# With NLP dependencies (transformers, datasets)
-uv sync --extra nlp
-
-# With medical imaging dependencies (MedMNIST)
-uv sync --extra medical
+uv sync                  # core
+uv sync --extra nlp      # + transformers, datasets
+uv sync --extra medical  # + MedMNIST
 ```
 
-Requires Python >= 3.13, PyTorch >= 2.9.1, and [Opacus](https://github.com/pytorch/opacus) >= 1.5.4.
+Requires Python ≥ 3.13, PyTorch ≥ 2.9.1, [Opacus](https://github.com/pytorch/opacus) ≥ 1.5.4.
 
-## Reproducing Paper Results
-
-All paper experiments live in `scripts/paper/`. Each script supports `--fast` for quick smoke-tests and `--seed`/`--epsilon` for single-configuration runs.
-
-### Main Experiments (Tables 1--2)
+## Quick start
 
 ```bash
-# Table 1: Vision
-uv run scripts/paper/exp_cnn_mnist.py                  # CNN on MNIST
-uv run scripts/paper/exp_crossvit_cifar100.py           # CrossViT on CIFAR-100
-
-# Table 2: NLP
-uv run scripts/paper/exp_imdb_logreg.py                 # Logistic regression on IMDB
-uv run scripts/paper/exp_stackoverflow.py               # BERT on StackOverflow
-uv run scripts/paper/exp_sst2.py                        # DistilBERT on SST-2
-```
-
-### Ablations (Section 5)
-
-```bash
-# Fig 2: FIM eigenvalue spectra across preconditioner sources
-uv run scripts/paper/ablation_fim_spectrum.py
-
-# Fig 3: Covariance similarity tracking over training
-uv run scripts/paper/ablation_cov_tracking.py
-
-# Table 3: AdaDPS comparison
-uv run scripts/paper/ablation_adadps.py
-
-# Fig 4: Transfer alignment across domain match/mismatch
-uv run scripts/paper/ablation_transfer_alignment.py
-```
-
-### Figures and Tables
-
-```bash
-# Generate all paper figures from saved results
-uv run scripts/paper/visualize/visualize_vision.py      # Fig 5: Vision accuracy vs epsilon
-uv run scripts/paper/visualize/visualize_nlp.py          # Fig 6: NLP accuracy vs epsilon
-uv run scripts/paper/visualize/visualize_spectrum.py      # Fig 2: Eigenvalue spectra
-uv run scripts/paper/visualize/visualize_cov_tracking.py  # Fig 3: Covariance evolution
-uv run scripts/paper/visualize/generate_latex_tables.py   # LaTeX tables for paper
-```
-
-### Quick Validation
-
-Run any experiment with reduced settings:
-
-```bash
-# Single seed, single epsilon, fewer epochs
-uv run scripts/paper/exp_cnn_mnist.py --fast
+uv run scripts/paper/exp_cnn_mnist.py --fast              # 30-second smoke test
 uv run scripts/paper/exp_cnn_mnist.py --seed 42 --epsilon 1.0
 ```
 
-## Project Structure
+Every paper experiment script accepts `--fast`, `--seed`, `--epsilon`.
+
+## Reproducing the paper
+
+Scripts live in `scripts/paper/`. They write CSVs to `results/`; the `visualize/` helpers turn those into the paper figures and LaTeX tables.
+
+```bash
+# Main benchmarks
+uv run scripts/paper/exp_cnn_mnist.py            # MNIST       / CNN
+uv run scripts/paper/exp_crossvit_cifar100.py    # CIFAR-100   / CrossViT
+uv run scripts/paper/exp_stackoverflow.py        # StackOverflow / BERT
+uv run scripts/paper/exp_imdb_logreg.py          # IMDB        / Logistic regression
+uv run scripts/paper/exp_sst2.py                 # SST-2       / DistilBERT
+
+# Ablations
+uv run scripts/paper/ablation_fim_spectrum.py        # eigenspectrum alignment (Fig. 2)
+uv run scripts/paper/ablation_cov_tracking.py        # covariance tracking through training (Fig. 3)
+uv run scripts/paper/ablation_adadps.py              # AdaDPS comparison
+uv run scripts/paper/ablation_transfer_alignment.py  # negative-transfer setting (Table 2)
+
+# Figures + LaTeX tables from saved results
+uv run scripts/paper/visualize/visualize_vision.py
+uv run scripts/paper/visualize/visualize_nlp.py
+uv run scripts/paper/visualize/visualize_spectrum.py
+uv run scripts/paper/visualize/visualize_cov_tracking.py
+uv run scripts/paper/visualize/generate_latex_tables.py
+```
+
+The full per-(dataset, ε) accuracy tables are in the paper appendix.
+
+## Repo layout
 
 ```
-dp-kfac/
-├── src/dp_kfac/              Core library
-│   ├── trainer.py            Training loops (plain, DP-SGD, DP-KFAC)
-│   ├── optimizer.py          DPKFACOptimizer with noise generation
-│   ├── covariance.py         KFAC covariance computation (A and G factors)
-│   ├── precondition.py       Per-sample gradient preconditioning
-│   ├── privacy.py            Gradient clipping and Gaussian noise
-│   ├── recorder.py           Forward/backward hook recorder
-│   ├── methods.py            Method registry (KFAC, AdaDPS, noise variants)
-│   ├── models.py             MLP, CNN, ViT, CrossViT, ConvNeXt, BERT, RoBERTa, DistilBERT
-│   ├── data.py               Dataset loaders (vision + NLP + TF-IDF)
-│   ├── analysis.py           Eigenvalue spectra and covariance tracking
-│   └── results.py            CSV I/O and result aggregation
-│
-├── scripts/paper/            Reproducibility scripts
-│   ├── exp_*.py              Main experiments (Tables 1--2)
-│   ├── ablation_*.py         Ablation studies (Section 5)
-│   └── visualize/            Figure and table generation
-│
-├── configs/                  YAML experiment configurations
-├── main.py                   CLI entry point
-└── results/                  Output directory (CSV, pickle, figures)
+src/dp_kfac/
+├── trainer.py        plain / DP-SGD / DP-KFC training loops
+├── optimizer.py      DPKFACOptimizer (clip, noise, preconditioner update)
+├── covariance.py     KFAC A / G factor estimation
+├── precondition.py   per-sample gradient preconditioning
+├── privacy.py        clipping + Gaussian mechanism
+├── methods.py        method registry (see below)
+├── models.py         MLP, CNN, CrossViT, ConvNeXt, BERT / RoBERTa / DistilBERT
+├── data.py           dataset loaders (vision + NLP + TF-IDF)
+└── analysis.py       eigenvalue spectra, covariance tracking
+
+scripts/paper/        all paper experiments, ablations and figure generation
+configs/              YAML experiment configurations
+docs/                 the project page (served at the link above)
 ```
 
-## Preconditioning Methods
+## Methods
 
-| Method | Key | Activation Source (A) | Gradient Source (G) |
-|:---|:---|:---|:---|
-| DP-SGD | `dp_sgd` | -- | -- |
-| KFAC (Public) | `dp_kfac_public` | Public data | Public data |
-| KFAC (White noise) | `dp_kfac_noise` | White noise | White noise |
-| **KFAC (Pink noise)** | `dp_kfac_pink` | Pink noise | Pink noise |
-| AdaDPS | `adadps` | Diagonal E[g^2] | Diagonal E[g^2] |
+| `--method`         | preconditioner source       | needs side data? |
+|:-------------------|:----------------------------|:-----------------|
+| `dp_sgd`           | —                            | no (baseline)    |
+| `dp_kfac_public`   | public-data activations + gradients | **yes** (public proxy) |
+| `dp_kfac_pink`     | structured synthetic noise (1/fᵅ)    | **no** ← ours       |
+| `dp_kfac_noise`    | white-noise probes           | no               |
+| `adadps`           | diagonal E[g²]               | yes (public)     |
 
-## Supported Tasks
+## Citation
 
-| Domain | Model | Private Data | Public Proxy |
-|:---|:---|:---|:---|
-| Vision | SimpleCNN | MNIST | FashionMNIST |
-| Vision | CrossViT (frozen) | CIFAR-100 | CIFAR-10 |
-| NLP | Logistic Regression | IMDB (TF-IDF) | AG News |
-| NLP | BERT (frozen) | StackOverflow | AG News |
-| NLP | DistilBERT (frozen) | SST-2 | IMDB |
-| Medical | SimpleCNN | PathMNIST | MNIST |
+```bibtex
+@inproceedings{molina2026dpkfc,
+  title     = {{DP-KFC}: Data-Free Preconditioning for Privacy-Preserving Deep Learning},
+  author    = {Molina Van den Bosch, Marc and Taiello, Riccardo and
+               Sund Aillet, Albert and Protani, Andrea and
+               Gonzalez Ballester, Miguel Angel and Serio, Luigi},
+  booktitle = {Proceedings of the 43rd International Conference on Machine Learning (ICML)},
+  year      = {2026}
+}
+```
 
-## License
+## Acknowledgements
 
-Released for anonymous review purposes.
+Supported by the Innovative Health Initiative Joint Undertaking and its members (grant 101172825) and the CAFEIN® R&D fund, the CERN Quantum Technology Initiative (QTI), the ERC Synergy Grant *Zee-Zoom-Zap* (grant 101224844), and the María de Maeztu Units of Excellence Programme (CEX2021-001195-M, MICIU/AEI/10.13039/501100011033).
